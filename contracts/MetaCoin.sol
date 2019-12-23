@@ -1,34 +1,45 @@
-pragma solidity >=0.4.25 <0.6.0;
+pragma solidity^0.5.0;
 
-import "./ConvertLib.sol";
+contract MetaCoin{
 
-// This is just a simple example of a coin-like contract.
-// It is not standards compatible and cannot be expected to talk to other
-// coin/token contracts. If you want to create a standards-compliant
-// token, see: https://github.com/ConsenSys/Tokens. Cheers!
+    // Balance will store the deposit ether of each address
+    mapping(address=>uint256) public Balance;
+    event depositMade(address accAddress, uint256 amount);
+    uint256 public totalAccount;
+    uint256  convertor = 1000000000000000000;
 
-contract MetaCoin {
-	mapping (address => uint) balances;
 
-	event Transfer(address indexed _from, address indexed _to, uint256 _value);
+    constructor () public payable{
+        totalAccount = 0;
 
-	constructor() public {
-		balances[tx.origin] = 10000;
+    }
+    
+    function initAccount() public payable returns(uint256){
+        Balance[msg.sender]=msg.value;
+        totalAccount++;
+        return(Balance[msg.sender]);
+    }
+    
+    function deposit () public payable returns (uint256){
+        
+        require(msg.value>0);
+        uint256 amount = msg.value/convertor;
+       Balance[msg.sender] += amount;
+       
+       emit  depositMade(msg.sender,amount);
+       
+       return Balance[msg.sender];
+    }
+     
+    function withDraw(uint256 amount) public payable returns(uint256){
+
+        require(amount<=Balance[msg.sender]);
+        Balance[msg.sender]-=amount;
+        msg.sender.transfer(amount*convertor);
+    
+        return(Balance[msg.sender]);
 	}
 
-	function sendCoin(address receiver, uint amount) public returns(bool sufficient) {
-		if (balances[msg.sender] < amount) return false;
-		balances[msg.sender] -= amount;
-		balances[receiver] += amount;
-		emit Transfer(msg.sender, receiver, amount);
-		return true;
-	}
 
-	function getBalanceInEth(address addr) public view returns(uint){
-		return ConvertLib.convert(getBalance(addr),2);
-	}
-
-	function getBalance(address addr) public view returns(uint) {
-		return balances[addr];
-	}
 }
+
